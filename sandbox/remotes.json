@@ -1,0 +1,26 @@
+{
+  "_doc": "Which GitHub repositories Review Desk may work on, and where their SANDBOX remote lives. Review Desk never pushes to GitHub: `publish` only pushes to the local bare repository named here. {sandbox} is replaced by the sandbox directory from review-desk.config.json.",
+  "repos": {
+    "review-desk-demo/billsplit": {
+      "remote": "{sandbox}/remotes/billsplit.git",
+      "review_source": "fixture",
+      "review_fixture": "demo/toy-review.json",
+      "pr_branches": {"7": "add-tip"},
+      "python": "default",
+      "checks": [
+        {"name": "black", "cmd": ["{python}", "-m", "black", "--check", "--diff", "billsplit", "tests"]},
+        {"name": "pytest", "cmd": ["{python}", "-m", "pytest", "-q"]}
+      ]
+    },
+    "bambinos/bambi": {
+      "remote": "{sandbox}/remotes/bambi.git",
+      "review_source": "github",
+      "pr_branches": {"1090": "1061-bayesian-r2"},
+      "python": "bambi",
+      "checks": [
+        {"name": "black", "cmd": ["{python}", "-m", "black", "--check", "--diff", "bambi/families/builtin.py", "bambi/families/family.py", "bambi/models.py", "tests/test_r2.py"]},
+        {"name": "pytest (R2 tests)", "cmd": ["{python}", "-m", "pytest", "-q", "-x", "tests/test_r2.py"], "env": {"PYTHONPATH": "."}, "timeout": 1500}
+      ]
+    }
+  }
+}
