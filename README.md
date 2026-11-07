@@ -4,7 +4,7 @@
 
 Built for the WeMakeDevs × Switch "Flip the Switch" hackathon.
 
-▶ **Demo video (2 min 9 s):** https://drive.google.com/file/d/1EptRWz_leC9NgYFc-U48q3Mj1A7aJt6S/view?usp=sharing
+▶ **Demo video (2 min 57 s, narrated):** https://youtu.be/If7Zj0kYAPY
 
 ![The Review Desk room in Mattermost: Fixer hands off to Checker, Checker asks the human to approve](demo/screenshot-approval.png)
 
