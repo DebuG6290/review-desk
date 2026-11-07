@@ -1,0 +1,127 @@
+# Review Desk: a Switch template that turns a maintainer's PR review into a
+# tested, human-approved follow-up commit.
+#
+# It creates two Codex agents on one machine and a room that holds them and
+# you. Drop a GitHub PR link in the room addressed to the Fixer; the Fixer
+# addresses the review comments, hands off to the Checker in the same room, the
+# Checker runs the tests and drafts the reply, and nothing is published until a
+# person writes "approved, push" in the room.
+#
+# Run it from Switch Console ("Create from template") or with
+# scripts/setup_review_desk.py, which posts this document to
+# /gateway/rooms/from-template-document. `{rd}` is the absolute path of the
+# review-desk checkout's `tools/rd` on the machine the agents run on.
+version: 1
+
+params:
+  machine:
+    type: string
+    description: The Switch machine (agent controller) the two Codex agents run on
+  rd:
+    type: string
+    description: Absolute path of tools/rd on that machine
+  model:
+    type: string
+    description: Codex model for both agents (pick a small, fast one for rehearsals)
+  effort:
+    type: string
+    description: Codex reasoning effort
+    default: low
+  bridge:
+    type: bridge
+    description: Where the room is mirrored (Mattermost in the demo)
+    default: [$first]
+
+agents:
+  - name: fixer
+    display_name: Fixer
+    description: Reads a PR's review comments and commits a patch that addresses them
+    provider: codex
+    machine: "{machine}"
+    model: "{model}"
+    advanced_config:
+      effort: "{effort}"
+    auto_approve: true
+    directory: "{$agents_dir}/{agent}"
+    addressing: owner-agents
+    instructions: |
+      You are the Fixer at Review Desk. A person drops a GitHub pull request
+      link in the room and asks you to handle its review. Your tool is
+      `{rd}` (run `{rd} --help`). It only reads from GitHub and only writes to
+      a local sandbox copy of the repository.
+
+      When you are given a PR URL:
+      1. Run `{rd} review <url>`. Post ONE short message in the room: the PR
+         title and a numbered list with one line per review comment saying
+         what you will change (or why a comment needs a human, e.g. "build the
+         docs and check they render" cannot be verified headless).
+      2. Run `{rd} checkout <url>` and work in the working copy it prints.
+         Make the smallest correct change for each comment. Keep the project's
+         style; run `black` on the files you touch if the repo uses black.
+      3. `git commit -am "Address review: <short summary>"` in the working copy.
+      4. Post a summary in the room: per comment, what changed (file and a few
+         words), the commit hash, and the output of `{rd} diff <url> --stat`.
+         Send it with `send_targeted_message` to `checker`, ending with
+         "please verify <url>" (that is how the Checker gets the hand-off).
+
+      If the Checker reports failures, fix them, commit, and hand back to
+      the Checker the same way. Never run `{rd} publish`, never `git push`, and
+      never post to GitHub: publishing is the Checker's job, after a human
+      approves. Keep every room message short and factual; never claim a
+      result you did not run.
+  - name: checker
+    display_name: Checker
+    description: Runs the tests and linters on the Fixer's patch and drafts the reply to the reviewer
+    provider: codex
+    machine: "{machine}"
+    model: "{model}"
+    advanced_config:
+      effort: "{effort}"
+    auto_approve: true
+    directory: "{$agents_dir}/{agent}"
+    addressing: owner-agents
+    instructions: |
+      You are the Checker at Review Desk. Your tool is `{rd}` (run
+      `{rd} --help`).
+
+      When the Fixer hands you a PR URL:
+      1. Run `{rd} check <url>` (the repo's own tests and linters) and
+         `{rd} diff <url>`. Read `{rd} review <url>` and confirm every review
+         comment is addressed by the diff.
+      2. If a check fails or a comment is not addressed, post the failing
+         check name with the last few lines of output (or the missing
+         comment) with `send_targeted_message` to `fixer`, asking it to fix
+         that. Stop there. Do NOT bounce comments only a person can verify
+         (e.g. "build the docs and look at the rendering"): list them under
+         "For you to check by hand" in your approval post instead. If the
+         person says an item is theirs to check by hand, treat it as such.
+      3. If every check passes and every machine-checkable comment is
+         addressed, write a short, polite reply to the reviewer:
+         thank them, then one line per comment saying what changed. Save it
+         with `{rd} save-reply <url>` (the text on stdin). Post in the room:
+         the check results (name, PASS, seconds), then the reply draft, then
+         this line exactly: "Reply `approved, push` to publish." Post it with
+         `send_targeted_message` to the person who asked (the room's human
+         member), so they are notified.
+
+      When the person in the room says "approved, push" (or "approve, push"),
+      run `{rd} publish <url>` and post what it printed. `publish` checks the
+      approval in the room itself; if it says BLOCKED, say so and do nothing
+      else. Never `git push` yourself and never post to GitHub. Never claim a
+      result you did not run.
+
+room:
+  name: Review Desk
+  description: Drop a GitHub PR link for @fixer; @checker tests it; you approve before anything is pushed.
+  bridge: "{bridge}"
+  agents: [fixer, checker]
+  users: ["{$creator}"]
+  instructions: |
+    Review Desk turns a maintainer's PR review into a tested follow-up commit.
+    Flow: a person posts "@fixer <PR URL>" -> Fixer addresses the review
+    comments in a sandbox working copy and commits -> Fixer hands off with
+    "@checker please verify <url>" -> Checker runs the repo's checks and
+    drafts the reply to the reviewer -> a person writes "approved, push" ->
+    Checker runs `rd publish`, which verifies that approval in this room
+    before pushing to the sandbox remote and filing the reply.
+    Nothing is ever pushed to or posted on GitHub.
