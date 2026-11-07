@@ -1,0 +1,23 @@
+{
+  "_note": "Demo fixture. This toy pull request exists only in the local sandbox remote, so its review cannot be fetched from GitHub. Same shape as GitHub's REST API (pulls/{n} and pulls/{n}/comments).",
+  "pull": {
+    "number": 7,
+    "title": "Add tip support to split_bill",
+    "html_url": "https://github.com/review-desk-demo/billsplit/pull/7",
+    "user": {"login": "new-contributor"},
+    "head": {"ref": "add-tip"},
+    "base": {"ref": "main"}
+  },
+  "reviews": [
+    {"user": {"login": "maintainer"}, "state": "CHANGES_REQUESTED",
+     "body": "Thanks for the PR! A few things before we can merge."}
+  ],
+  "comments": [
+    {"id": 1001, "user": {"login": "maintainer"}, "path": "billsplit/core.py", "line": 7,
+     "body": "Please don't do money math in floats. Use `decimal.Decimal` and quantize every share to 2 places (`ROUND_HALF_UP`)."},
+    {"id": 1002, "user": {"login": "maintainer"}, "path": "billsplit/core.py", "line": 6,
+     "body": "Silently returning `[]` hides bugs. Raise a `ValueError` when `people` is not a positive integer, and also when `tip_pct` is negative."},
+    {"id": 1003, "user": {"login": "maintainer"}, "path": "tests/test_core.py", "line": 9,
+     "body": "Please add a test that the shares always add up exactly to the total including tip, e.g. 100 split 3 ways. Any leftover cent should go to the first person(s)."}
+  ]
+}
