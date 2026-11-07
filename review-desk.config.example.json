@@ -1,0 +1,13 @@
+{
+  "sandbox": "/tmp/rd-sandbox",
+  "pythons": {
+    "default": "/tmp/rd-run/rdvenv/bin/python",
+    "bambi": "/path/to/a/venv/with/bambi/bin/python"
+  },
+  "room_id": "<switch room id>",
+  "mattermost": {
+    "url": "http://localhost:8065",
+    "token": "<Mattermost token that can read the room's channel>",
+    "channel_id": "<the room's Mattermost channel id>"
+  }
+}

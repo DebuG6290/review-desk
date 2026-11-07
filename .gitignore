@@ -1,0 +1,24 @@
+# local config with a Mattermost token (written by scripts/setup_review_desk.py)
+review-desk.config.json
+*.config.local.json
+.env
+# agent credentials / runtime state
+codex-home/
+.codex/
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+rdvenv/
+bambi-venv/
+# sandbox remotes, working copies, check state, outbox
+rd-sandbox/
+sandbox/work/
+sandbox/state/
+sandbox/outbox/
+sandbox/remotes/
+# demo build artifacts (the video is hosted separately)
+demo/raw/
+demo/frames/
+demo/*.mp4
